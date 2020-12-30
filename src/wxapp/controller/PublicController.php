@@ -2,13 +2,13 @@
 // +----------------------------------------------------------------------
 // | ThinkCMF [ WE CAN DO IT MORE SIMPLE ]
 // +----------------------------------------------------------------------
-// | Copyright (c) 2013-2017 http://www.thinkcmf.com All rights reserved.
+// | Copyright (c) 2013-present http://www.thinkcmf.com All rights reserved.
 // +----------------------------------------------------------------------
 // | Author: Dean <zxxjjforever@163.com>
 // +----------------------------------------------------------------------
 namespace api\wxapp\controller;
 
-use think\Db;
+use think\facade\Db;
 use cmf\controller\RestBaseController;
 use wxapp\aes\WXBizDataCrypt;
 use think\Validate;
