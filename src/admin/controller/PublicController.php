@@ -2,14 +2,14 @@
 // +----------------------------------------------------------------------
 // | ThinkCMF [ WE CAN DO IT MORE SIMPLE ]
 // +----------------------------------------------------------------------
-// | Copyright (c) 2013-2017 http://www.thinkcmf.com All rights reserved.
+// | Copyright (c) 2013-present http://www.thinkcmf.com All rights reserved.
 // +----------------------------------------------------------------------
 // | Author: Dean <zxxjjforever@163.com>
 // +----------------------------------------------------------------------
 namespace api\admin\controller;
 
 use cmf\controller\RestBaseController;
-use think\Db;
+use think\facade\Db;
 use think\facade\Validate;
 
 class PublicController extends RestBaseController

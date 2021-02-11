@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------------
 // | 文件说明：评论
 // +----------------------------------------------------------------------
-// | Copyright (c) 2013-2017 http://www.thinkcmf.com All rights reserved.
+// | Copyright (c) 2013-present http://www.thinkcmf.com All rights reserved.
 // +----------------------------------------------------------------------
 // | Author: wuwu <15093565100@163.com>
 // +----------------------------------------------------------------------
@@ -13,7 +13,7 @@
 
 namespace api\user\model;
 
-use think\Db;
+use think\facade\Db;
 use think\Model;
 
 /**
@@ -22,6 +22,12 @@ use think\Model;
 class CommentModel extends Model
 {
 
+    /**
+     * 模型名称
+     * @var string
+     */
+    protected $name = 'comment';
+    
     //模型关联方法
     protected $relationFilter = ['user', 'to_user'];
 
