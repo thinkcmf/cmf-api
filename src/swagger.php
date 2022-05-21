@@ -19,11 +19,41 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\SecurityScheme(
+ *     securityScheme="ApiToken-XX-Token",
  *     type="apiKey",
  *     in="header",
- *     securityScheme="api_key",
+ *     name="XX-Token"
+ * )
+ * @OA\SecurityScheme(
+ *     securityScheme="ApiToken-Authorization",
+ *     type="apiKey",
+ *     in="header",
  *     name="Authorization"
  * )
+ * @OA\SecurityScheme(
+ *     securityScheme="ApiToken-AuthorizationBearer",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT"
+ * )
+ * @OA\Parameter(
+ *     parameter="DeviceTypeParameter",
+ *     in="header",
+ *     name="XX-Device-Type",
+ *     required=true,
+ *     description="设备类型：mobile,android,iphone,ipad,web,pc,mac,wxapp,ios",
+ *     @OA\Schema(
+ *         type="string",
+ *         default="web"
+ *     )
+ * )
+ * @OA\Response(
+ *     response=200,
+ *     description="HTTP 200 响应",
+ *     @OA\JsonContent(
+ *         ref="#/components/schemas/SuccessResponse"
+ *     )
+ * ),
  */
 class ApiInfo
 {
