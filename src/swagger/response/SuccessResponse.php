@@ -1,6 +1,6 @@
 <?php
 
-namespace api\swagger\reponse;
+namespace api\swagger\response;
 
 use OpenApi\Annotations as OA;
 
@@ -11,13 +11,13 @@ class SuccessResponse
 {
 
     /**
-     * @OA\Property(format="int64")
+     * @OA\Property(format="int64",example="1")
      * @var int
      */
     public $code;
 
     /**
-     * @OA\Property()
+     * @OA\Property(example="success")
      * @var string
      */
     public $msg;

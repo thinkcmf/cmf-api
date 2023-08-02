@@ -12,11 +12,52 @@ use api\user\model\UserModel;
 use think\facade\Db;
 use think\facade\Validate;
 use cmf\controller\RestBaseController;
+use OpenApi\Annotations as OA;
 
 class PublicController extends RestBaseController
 {
     /**
-     *  用户注册
+     * 用户注册
+     * @OA\Post(
+     *     tags={"user"},
+     *     path="/user/public/register",
+     *     summary="用户注册",
+     *     description="用户注册",
+     *     @OA\RequestBody(
+     *          required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(
+     *                  @OA\Property(
+     *                      property="username",
+     *                      description="手机号，邮箱，账户",
+     *                      type="string",
+     *                      required=true
+     *                  ),
+     *                  @OA\Property(
+     *                      property="password",
+     *                      description="密码",
+     *                      type="string",
+     *                      required=true
+     *                  ),
+     *                  @OA\Property(
+     *                      property="verification_code",
+     *                      description="数字验证码",
+     *                      type="string",
+     *                      required=true
+     *                  ),
+     *             )
+     *         ),
+     *     ),
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "注册并激活成功,请登录!","data": null})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "请输入您的密码!","data": null})
+     *     ),
+     * )
      * @throws \think\Exception
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
@@ -201,43 +242,26 @@ class PublicController extends RestBaseController
      * @OA\Post(
      *     tags={"user"},
      *     path="/user/public/login",
-     *     @OA\Parameter(
-     *         in="header",
-     *         name="XX-Device-Type",
-     *         description="此处与表单 device_type 任选一 设备类型：mobile,android,iphone,ipad,web,pc,mac,wxapp,ios",
-     *         @OA\Schema(
-     *             type="string",
-     *             default="web"
-     *         )
-     *     ),
      *     @OA\RequestBody(
      *         description="请求参数",
      *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 @OA\Property(
-     *                     property="username",
-     *                     description="手机号，邮箱，账户",
-     *                     type="string"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="password",
-     *                     description="密码",
-     *                     type="string"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="device_type",
-     *                     description="此处与header XX-Device-Type 任选一 设备类型：mobile,android,iphone,ipad,web,pc,mac,wxapp,ios",
-     *                     type="string"
-     *                 )
-     *             )
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(ref="#/components/schemas/LoginRequest")
+     *         ),
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(ref="#/components/schemas/LoginRequest")
      *         )
      *     ),
      *     @OA\Response(
-     *         response="200",
-     *         description="An example resource",
+     *         response="1",
+     *         description="登录成功",
+     *         @OA\JsonContent(ref="#/components/schemas/UserPublicLoginResponse")
      *     ),
-     *     @OA\Response(response="default", description="An example resource")
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "登录失败!","data": ""})
+     *     ),
      * )
      */
     // TODO 增加最后登录信息记录,如 ip
@@ -331,14 +355,27 @@ class PublicController extends RestBaseController
         $this->success("登录成功!", ['token' => $token, 'user' => $findUser->hidden([
             'user_pass',
             'user_activation_key',
-            'more','user_type'
+            'more', 'user_type'
         ])]);
     }
 
     /**
      * 用户退出
-     * @throws \think\Exception
-     * @throws \think\exception\PDOException
+     * @throws \think\exception\DbException
+     * @OA\Post(
+     *     tags={"user"},
+     *     path="/user/public/logout",
+     *     summary="用户退出",
+     *     description="用户退出",
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "退出成功!","data": null})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "退出失败!","data": null})
+     *     ),
+     * )
      */
     public function logout()
     {
