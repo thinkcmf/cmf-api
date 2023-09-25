@@ -26,11 +26,11 @@ class RouteController extends RestAdminBaseController
      *          response="1",
      *          description="success",
      *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
-     *              "routes":{
+     *              "list":{
      *                  {"id": 1,"list_order": 10000,"status": 1,"type": 1,
      *                      "full_url": "demo/List/index","url": "list/:id"
      *                  }
-     *              }
+     *              },"total":1
      *          }})
      *     ),
      *     @OA\Response(
@@ -46,7 +46,7 @@ class RouteController extends RestAdminBaseController
         $routes     = RouteModel::order("list_order asc")->select();
         $routeModel->getRoutes(true);
         unset($CMF_GV_routes);
-        $this->success("success", ['routes' => $routes]);
+        $this->success("success", ['list' => $routes, 'total' => count($routes)]);
     }
 
     /**
@@ -72,7 +72,7 @@ class RouteController extends RestAdminBaseController
      *          response="1",
      *          description="success",
      *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
-     *              "route":{"id": 7,"list_order": 5000,"status": 1,"type": 2,"full_url": "portal/Page/index?id=3","url": "contact$"}
+     *              "item":{"id": 7,"list_order": 5000,"status": 1,"type": 2,"full_url": "portal/Page/index?id=3","url": "contact$"}
      *          }})
      *     ),
      *     @OA\Response(
@@ -90,7 +90,7 @@ class RouteController extends RestAdminBaseController
             $this->error($result);
         }
         $routeModel->save($data);
-        $this->success(lang('ADD_SUCCESS'), ['route' => $routeModel]);
+        $this->success(lang('ADD_SUCCESS'), ['item' => $routeModel]);
     }
 
     /**
@@ -114,7 +114,7 @@ class RouteController extends RestAdminBaseController
      *          response="1",
      *          description="success",
      *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
-     *              "route":{"id": 7,"list_order": 5000,"status": 1,"type": 2,"full_url": "portal/Page/index?id=3","url": "contact$"}
+     *              "item":{"id": 7,"list_order": 5000,"status": 1,"type": 2,"full_url": "portal/Page/index?id=3","url": "contact$"}
      *          }})
      *     ),
      *     @OA\Response(
@@ -131,7 +131,7 @@ class RouteController extends RestAdminBaseController
         if (empty($route)) {
             $this->error('not found!');
         } else {
-            $this->success('success', ['route' => $route]);
+            $this->success('success', ['item' => $route]);
         }
     }
 
@@ -367,10 +367,8 @@ class RouteController extends RestAdminBaseController
      *          response="1",
      *          description="success",
      *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
-     *              "routes":{
-     *                  {"id": 1,"list_order": 10000,"status": 1,"type": 1,
-     *                      "full_url": "demo/List/index","url": "list/:id"
-     *                  }
+     *              "list":{
+     *                  "user/Login/index":{"name":"用户登录","vars":{},"simple":false,"action":"user/Login/index","suggest_url":"login$"}
      *              }
      *          }})
      *     ),
@@ -389,7 +387,7 @@ class RouteController extends RestAdminBaseController
             $urls[$key]['suggest_url'] = $this->_suggest_url($url);
         }
 
-        $this->success("success", ['urls' => $urls]);
+        $this->success("success", ['list' => $urls,'total'=>count($urls)]);
     }
 
     private function _suggest_url($url)

@@ -47,7 +47,7 @@ class AdminOauthController extends RestAdminBaseController
      *          response="1",
      *          description="success",
      *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
-     *              "users":{
+     *              "list":{
      *                  {
      *                      "id": 1,"user_id": 1,"last_login_time": 0,"expire_time": 0,"create_time": 0,"login_times": 0,"status": 1,
      *                       "nickname": "猫二","third_party": "","app_id": "","last_login_ip": "","access_token": "",
@@ -82,10 +82,10 @@ class AdminOauthController extends RestAdminBaseController
 
         if (!$list->isEmpty()) {
             $list->load(['user']);
-            $list->hidden(['user.user_pass']);
+            $list->visible(['user.user_type','user.sex','user.user_login','user.user_nickname','user.avatar']);
         }
 
-        $this->success('success', ['users' => $list->items(), 'total' => $list->total()]);
+        $this->success('success', ['list' => $list->items(), 'total' => $list->total()]);
     }
 
     /**
