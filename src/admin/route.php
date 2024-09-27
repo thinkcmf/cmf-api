@@ -25,6 +25,7 @@ Route::post('admin/menus/lang/export$', 'admin/Menu/exportMenuLang');
 Route::post('admin/menus/list/order$', 'admin/Menu/listOrder');
 Route::get('admin/home/menus$', 'admin/Menu/menus');
 Route::resource('admin/menus', 'admin/Menu');
+Route::post('admin/menus/import', 'admin/Menu/importMenus');
 
 Route::put('admin/my/info$', 'admin/My/infoPut');
 
@@ -34,6 +35,7 @@ Route::resource('admin/nav/menus', 'admin/NavMenu');
 Route::post('admin/nav/menus/:id/toggle$', 'admin/NavMenu/toggle')->pattern(['id' => '\d+',]);
 Route::post('admin/nav/menus/:id/status/:status$', 'admin/NavMenu/status')->pattern(['id' => '\d+', 'status' => '\d+',]);
 Route::post('admin/nav/menus/list/order$', 'admin/NavMenu/listOrder');
+Route::get('admin/navs/select/navs', 'admin/Nav/selectNavs');
 
 Route::get('admin/plugins$', 'admin/Plugin/index');
 Route::post('admin/plugins/:id/status/:status$', 'admin/Plugin/status')->pattern(['id' => '\d+', 'status' => '\d+',]);
@@ -42,6 +44,7 @@ Route::put('admin/plugins/:id/config$', 'admin/Plugin/configPut')->pattern(['id'
 Route::post('admin/plugins/:name$', 'admin/Plugin/install');
 Route::put('admin/plugins/:name$', 'admin/Plugin/update');
 Route::delete('admin/plugins/:id$', 'admin/Plugin/uninstall');
+Route::get('admin/plugins/hooks/:id$', 'admin/Plugin/hooks');
 
 Route::get('admin/recycle/bin/items$', 'admin/RecycleBin/index');
 Route::post('admin/recycle/bin/restore$', 'admin/RecycleBin/restore');
@@ -56,9 +59,11 @@ Route::resource('admin/roles', 'admin/Role');
 
 Route::delete('admin/setting/cache$', 'admin/Setting/clearCache');
 Route::put('admin/setting/site$', 'admin/Setting/sitePut');
+Route::put('admin/setting/admin$', 'admin/Setting/adminPut');
 Route::put('admin/setting/upload$', 'admin/Setting/uploadPut');
 Route::put('admin/setting/storage$', 'admin/Setting/storagePut');
 Route::put('admin/setting/password$', 'admin/Setting/passwordPut');
+Route::put('admin/setting/lang$', 'admin/Setting/langPut');
 
 Route::post('admin/themes/:theme/active$', 'admin/Theme/active');
 Route::get('admin/themes/not/installed$', 'admin/Theme/notInstalled');
@@ -81,6 +86,9 @@ Route::post('admin/theme/:theme/file/setting$', 'admin/Theme/fileSettingPost');
 Route::get('admin/theme/widget/setting$', 'admin/Theme/widgetSetting');
 Route::post('admin/theme/widget/setting$', 'admin/Theme/widgetSettingPost');
 Route::post('admin/theme/widgets/sort$', 'admin/Theme/widgetsSort');
+Route::post('admin/theme/file/block/widget$', 'admin/Theme/fileWidgetBlockWidgetPost');
+Route::get('admin/theme/file/widgets$', 'admin/Theme/fileWidgets');
+Route::delete('admin/theme/file/block/widget$', 'admin/Theme/fileWidgetBlockWidgetDelete');
 
 Route::post('admin/my/email/setting/test$', 'admin/My/emailSettingTest');
 Route::get('admin/my/email/setting$', 'admin/My/emailSetting');

@@ -10,6 +10,7 @@
 // +----------------------------------------------------------------------
 namespace api\user\controller;
 
+use api\user\model\UserModel;
 use cmf\controller\RestBaseController;
 use OpenApi\Annotations as OA;
 use think\facade\Validate;
@@ -85,8 +86,11 @@ class VerificationCodeController extends RestBaseController
 
             $emailTemplate = cmf_get_option('email_template_verification_code');
 
-            $user     = cmf_get_current_user();
-            $username = empty($user['user_nickname']) ? $user['user_login'] : $user['user_nickname'];
+            $user     = UserModel::find($this->getUserId(false));
+            $username = '';
+            if (!empty($user)) {
+                $username = empty($user['user_nickname']) ? $user['user_login'] : $user['user_nickname'];
+            }
 
             $message = htmlspecialchars_decode($emailTemplate['template']);
             $message = View::display($message, ['code' => $code, 'username' => $username]);

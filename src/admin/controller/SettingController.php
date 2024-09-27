@@ -10,6 +10,7 @@ namespace api\admin\controller;
 
 use app\admin\model\RouteModel;
 use app\admin\model\UserModel;
+use app\admin\service\SettingService;
 use cmf\controller\RestAdminBaseController;
 use OpenApi\Annotations as OA;
 
@@ -120,17 +121,120 @@ class SettingController extends RestAdminBaseController
         }
 
         $options = $this->request->param('options/a');
-        cmf_set_option('site_info', $options);
+        if(!empty($options)){
+            cmf_set_option('site_info', $options);
+        }
 
         $cmfSettings = $this->request->param('cmf_settings/a');
-
-        $bannedUsernames                 = preg_replace("/[^0-9A-Za-z_\\x{4e00}-\\x{9fa5}-]/u", ",", $cmfSettings['banned_usernames']);
-        $cmfSettings['banned_usernames'] = $bannedUsernames;
-        cmf_set_option('cmf_settings', $cmfSettings);
+        if (!empty($cmfSettings)) {
+            $bannedUsernames                 = preg_replace("/[^0-9A-Za-z_\\x{4e00}-\\x{9fa5}-]/u", ",", $cmfSettings['banned_usernames']);
+            $cmfSettings['banned_usernames'] = $bannedUsernames;
+            cmf_set_option('cmf_settings', $cmfSettings);
+        }
 
         $cdnSettings = $this->request->param('cdn_settings/a');
-        cmf_set_option('cdn_settings', $cdnSettings);
+        if(!empty($cdnSettings)){
+            cmf_set_option('cdn_settings', $cdnSettings);
+        }
 
+        $adminSettings = $this->request->param('admin_settings/a');
+        if (!empty($adminSettings)) {
+            $routeModel = new RouteModel();
+            if (!empty($adminSettings['admin_password'])) {
+                $routeModel->setRoute($adminSettings['admin_password'] . '$', 'admin/Index/index', [], 2, 5000);
+            } else {
+                $routeModel->deleteRoute('admin/Index/index', []);
+            }
+
+            $routeModel->getRoutes(true);
+            if (!empty($adminSettings['admin_theme'])) {
+                $result = cmf_set_dynamic_config([
+                    'template' => [
+                        'cmf_admin_default_theme' => $adminSettings['admin_theme']
+                    ]
+                ]);
+
+                if ($result === false) {
+                    $this->error('配置写入失败!');
+                }
+            }
+
+            cmf_set_option('admin_settings', $adminSettings);
+        }
+
+        $this->success(lang('EDIT_SUCCESS'));
+
+    }
+
+    /**
+     * 获取后台设置
+     * @throws \think\exception\DbException
+     * @OA\Get(
+     *     tags={"admin"},
+     *     path="/admin/setting/admin",
+     *     summary="获取后台设置",
+     *     description="获取后台设置",
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "success","data":
+     *              {"admin_styles":{"arcoadmin","flatadmin","orangeadmin","simpleadmin"},"admin_themes":{"admin_default","admin_simpleboot3"},"admin_settings":{"admin_password":"","admin_theme":"admin_default","admin_style":"arcoadmin"}}
+     *          })
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "后台设置!","data": ""})
+     *     ),
+     * )
+     */
+    public function admin()
+    {
+        $noNeedDirs     = [".", "..", ".svn", 'fonts'];
+        $adminThemesDir = WEB_ROOT . config('template.cmf_admin_theme_path') . config('template.cmf_admin_default_theme') . '/public/assets/themes/';
+        $adminStyles    = cmf_scan_dir($adminThemesDir . '*', GLOB_ONLYDIR);
+        $adminStyles    = array_diff($adminStyles, $noNeedDirs);
+        $adminSettings  = cmf_get_option('admin_settings');
+
+        $adminThemes = [];
+        $themes      = cmf_scan_dir(WEB_ROOT . config('template.cmf_admin_theme_path') . '/*', GLOB_ONLYDIR);
+
+        foreach ($themes as $theme) {
+            if (strpos($theme, 'admin_') === 0) {
+                array_push($adminThemes, $theme);
+            }
+        }
+
+        if (APP_DEBUG && false) { // TODO 没确定要不要可以设置默认应用
+            $apps = cmf_scan_dir($this->app->getAppPath() . '*', GLOB_ONLYDIR);
+            $apps = array_diff($apps, $noNeedDirs);
+        }
+
+        $this->success("success", [
+            'admin_styles'   => array_values($adminStyles),
+            'admin_themes'   => $adminThemes,
+            'admin_settings' => $adminSettings,
+        ]);
+    }
+
+    /**
+     * 后台设置提交保存
+     * @throws \think\exception\DbException
+     * @OA\Put(
+     *     tags={"admin"},
+     *     path="/admin/setting/admin",
+     *     summary="后台设置提交保存",
+     *     description="后台设置提交保存",
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "保存成功!","data": ""})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "保存成功!","data": ""})
+     *     ),
+     * )
+     */
+    public function adminPut()
+    {
         $adminSettings = $this->request->param('admin_settings/a');
 
         $routeModel = new RouteModel();
@@ -219,9 +323,179 @@ class SettingController extends RestAdminBaseController
     public function uploadPut()
     {
         //TODO 非空验证
-        $uploadSetting = $this->request->post();
+        $uploadSetting = $this->request->param();
 
         cmf_set_option('upload_setting', $uploadSetting);
+        $this->success(lang('EDIT_SUCCESS'));
+    }
+
+        /**
+     * 多语言设置
+     * @throws \think\exception\DbException
+     * @OA\Get(
+     *     tags={"admin"},
+     *     path="/admin/setting/lang",
+     *     summary="多语言设置",
+     *     description="多语言设置",
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
+     *                  "lang_setting":{}
+     *              }
+     *          })
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "error!","data": ""})
+     *     ),
+     * )
+     */
+    public function lang()
+    {
+        $langSetting = app(SettingService::class)->getLangSetting();
+        $this->success('success', ['lang_setting' => $langSetting]);
+    }
+
+
+    /**
+     * 多语言设置提交保存
+     * @throws \think\exception\DbException
+     * @OA\Put(
+     *     tags={"admin"},
+     *     path="/admin/setting/lang",
+     *     summary="多语言设置提交保存",
+     *     description="多语言设置提交保存",
+     *     @OA\RequestBody(
+     *         description="请求参数",
+     *         @OA\MediaType(
+     *             mediaType="application/x-www-form-urlencoded",
+     *             @OA\Schema(ref="#/components/schemas/AdminSettingUploadPutRequestForm")
+     *         ),
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(ref="#/components/schemas/AdminSettingUploadPutRequest")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="1",
+     *          @OA\JsonContent(example={"code": 1,"msg": "保存成功!","data": ""})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "保存成功!","data": ""})
+     *     ),
+     * )
+     */
+    public function langPut()
+    {
+        $langSetting        = $this->request->param();
+        $defaultLang        = empty($langSetting['default_lang']) ? 'zh-cn' : $langSetting['default_lang'];
+        $adminDefaultLang   = empty($langSetting['admin_default_lang']) ? 'zh-cn' : $langSetting['admin_default_lang'];
+        $allowLangList      = [];
+        $adminAllowLangList = [];
+        $langAliasList      = [];
+        $langDomainList     = [];
+        $acceptLanguageList = [];
+
+        // 多语言模式;1:pathinfo前缀;2:域名;
+        $multiLangMode = empty($langSetting['multi_lang_mode']) || $langSetting['multi_lang_mode'] == 1 ? 1 : 2;
+
+        if (empty($langSetting['allow_lang_list'])) {
+            $allowLangList                  = [$defaultLang];
+            $langSetting['allow_lang_list'] = [[
+                'lang'   => $defaultLang,
+                'alias'  => '',
+                'domain' => '',
+                'enable' => 1,
+            ]];
+        } else {
+            foreach ($langSetting['allow_lang_list'] as $allowLang) {
+                if (empty($allowLang['lang'])) {
+                    $this->error('前台语言包名不能为空！');
+                }
+                if (in_array($allowLang['lang'], $allowLangList)) {
+                    $this->error('前台语言包名不能重复！');
+                }
+                if ($allowLang['lang'] == $defaultLang && empty($allowLang['enable'])) {
+                    $this->error('前台默认语言包必须启用！');
+                }
+
+                if (!empty($allowLang['enable'])) {
+                    $allowLangList[] = $allowLang['lang'];
+                }
+
+                if (!empty($allowLang['alias'])) {
+                    if (in_array($allowLang['alias'], $langAliasList)) {
+                        $this->error('前台语言别名不能重复！');
+                    }
+                    $langAliasList[$allowLang['lang']]       = $allowLang['alias'];
+                    $acceptLanguageList[$allowLang['alias']] = $allowLang['lang'];
+                }
+
+                if (!empty($allowLang['domain'])) {
+                    if (isset($langDomainList[$allowLang['domain']])) {
+                        $this->error('前台语言域名不能重复！');
+                    }
+                    $langDomainList[$allowLang['domain']] = $allowLang['lang'];
+                } else {
+                    if ($multiLangMode == 2) {
+                        $this->error('域名模式下语言域名不能为空！');
+                    }
+                }
+            }
+        }
+
+        if (empty($langSetting['admin_allow_lang_list'])) {
+            $allowLangList                        = [$adminAllowLangList];
+            $langSetting['admin_allow_lang_list'] = [[
+                'lang'   => $adminAllowLangList,
+                'enable' => 1,
+            ]];
+        } else {
+            foreach ($langSetting['admin_allow_lang_list'] as $allowLang) {
+                if (empty($allowLang['lang'])) {
+                    $this->error('后台语言包名不能为空！');
+                }
+                if (in_array($allowLang['lang'], $adminAllowLangList)) {
+                    $this->error('后台语言包名不能重复！');
+                }
+                if ($allowLang['lang'] == $adminDefaultLang && empty($allowLang['enable'])) {
+                    $this->error('后台默认语言包必须启用！');
+                }
+                if (!empty($allowLang['enable'])) {
+                    $adminAllowLangList[] = $allowLang['lang'];
+                }
+            }
+        }
+
+        $result = cmf_set_dynamic_config([
+            'lang' => [
+                // 前台多语言开关
+                'home_multi_lang'       => empty($langSetting['home_multi_lang']) ? 0 : 1,
+                // 后台多语言开关
+                'admin_multi_lang'      => empty($langSetting['admin_multi_lang']) ? 0 : 1,
+                // 多语言模式;1:pathinfo前缀;2:域名;
+                'multi_lang_mode'       => $multiLangMode,
+                // 默认语言
+                'default_lang'          => $defaultLang,
+                // 允许的语言列表
+                'allow_lang_list'       => $allowLangList,
+                // 后台默认语言
+                'admin_default_lang'    => $adminDefaultLang,
+                // 后台允许的语言列表
+                'admin_allow_lang_list' => $adminAllowLangList,
+                // 语言包别名
+                'lang_alias'            => $langAliasList,
+                // 前台多语言域名列表
+                'lang_domain_list'      => $langDomainList,
+                // Accept-Language转义为对应语言包名称
+                'accept_language'       => $acceptLanguageList,
+            ]
+        ]);
+        if ($result === false) {
+            $this->error('配置文件写入失败！');
+        }
+        cmf_set_option('lang_setting', $langSetting);
         $this->success(lang('EDIT_SUCCESS'));
     }
 
@@ -345,7 +619,7 @@ class SettingController extends RestAdminBaseController
             $this->error("新密码不能为空！");
         }
 
-        $userId = cmf_get_current_admin_id();
+        $userId = $this->getUserId();
 
         $admin = UserModel::where("id", $userId)->find();
 
@@ -355,7 +629,6 @@ class SettingController extends RestAdminBaseController
 
         if (cmf_compare_password($oldPassword, $admin['user_pass'])) {
             if ($password == $rePassword) {
-
                 if (cmf_compare_password($password, $admin['user_pass'])) {
                     $this->error("新密码不能和原始密码相同！");
                 } else {

@@ -9,6 +9,7 @@
 namespace api\admin\controller;
 
 use app\admin\logic\PluginLogic;
+use app\admin\model\HookModel;
 use app\admin\model\HookPluginModel;
 use app\admin\model\PluginModel;
 use app\admin\model\RecycleBinModel;
@@ -241,6 +242,30 @@ class PluginController extends RestAdminBaseController
     }
 
     /**
+     * 解析插件配置验证规则
+     * @param $rules
+     * @return array
+     */
+    private function _parseRules($rules)
+    {
+        $newRules = [];
+
+        $simpleRules = [
+            'require', 'number',
+            'integer', 'float', 'boolean', 'email',
+            'array', 'accepted', 'date', 'alpha',
+            'alphaNum', 'alphaDash', 'activeUrl',
+            'url', 'ip'];
+        foreach ($rules as $key => $rule) {
+            if (in_array($key, $simpleRules) && $rule) {
+                array_push($newRules, $key);
+            }
+        }
+
+        return $newRules;
+    }
+
+    /**
      * 安装插件
      * @throws \think\exception\DbException
      * @OA\Post(
@@ -275,75 +300,14 @@ class PluginController extends RestAdminBaseController
             $result     = PluginLogic::install($pluginName);
 
             if ($result !== true) {
-                $this->error($result);
+                if (is_string($result)) {
+                    $this->error($result);
+                } else {
+                    $this->error('安装失败！');
+                }
             }
 
             $this->success(lang('Installed successfully'));
-        }
-    }
-
-    /**
-     * 解析插件配置验证规则
-     * @param $rules
-     * @return array
-     */
-    private function _parseRules($rules)
-    {
-        $newRules = [];
-
-        $simpleRules = [
-            'require', 'number',
-            'integer', 'float', 'boolean', 'email',
-            'array', 'accepted', 'date', 'alpha',
-            'alphaNum', 'alphaDash', 'activeUrl',
-            'url', 'ip'];
-        foreach ($rules as $key => $rule) {
-            if (in_array($key, $simpleRules) && $rule) {
-                array_push($newRules, $key);
-            }
-        }
-
-        return $newRules;
-    }
-
-    /**
-     * 更新插件
-     * @throws \think\exception\DbException
-     * @OA\Put(
-     *     tags={"admin"},
-     *     path="/admin/plugins/{name}",
-     *     summary="更新插件",
-     *     description="更新插件",
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="path",
-     *         description="插件名",
-     *         required=true,
-     *         @OA\Schema(
-     *             type="string",
-     *         )
-     *     ),
-     *     @OA\Response(
-     *          response="1",
-     *          description="success",
-     *          @OA\JsonContent(example={"code": 1,"msg": "更新成功","data":""})
-     *     ),
-     *     @OA\Response(
-     *          response="0",
-     *          @OA\JsonContent(example={"code": 0,"msg": "error!","data":""})
-     *     ),
-     * )
-     */
-    public function update()
-    {
-        if ($this->request->isPut()) {
-            $pluginName = $this->request->param('name', '', 'trim');
-            $result     = PluginLogic::update($pluginName);
-
-            if ($result !== true) {
-                $this->error($result);
-            }
-            $this->success(lang('Updated successfully'));
         }
     }
 
@@ -384,7 +348,11 @@ class PluginController extends RestAdminBaseController
             $result = $pluginModel->uninstall($id);
 
             if ($result !== true) {
-                $this->error(lang('Uninstall failed'));
+                if (is_string($result)) {
+                    $this->error($result);
+                } else {
+                    $this->error(lang('Uninstall failed'));
+                }
             }
 
             Cache::clear('init_hook_plugins');
@@ -462,6 +430,101 @@ class PluginController extends RestAdminBaseController
         Cache::clear('init_hook_plugins');
 
         $this->success('操作成功！');
+    }
+
+    /**
+     * 更新插件
+     * @throws \think\exception\DbException
+     * @OA\Put(
+     *     tags={"admin"},
+     *     path="/admin/plugins/{name}",
+     *     summary="更新插件",
+     *     description="更新插件",
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="path",
+     *         description="插件名",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="string",
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="1",
+     *          description="success",
+     *          @OA\JsonContent(example={"code": 1,"msg": "更新成功","data":""})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "error!","data":""})
+     *     ),
+     * )
+     */
+    public function update()
+    {
+        if ($this->request->isPut()) {
+            $pluginName = $this->request->param('name', '', 'trim');
+            $result     = PluginLogic::update($pluginName);
+
+            if ($result !== true) {
+                if (is_string($result)) {
+                    $this->error($result);
+                } else {
+                    $this->error('更新失败！');
+                }
+            }
+
+            $this->success(lang('Updated successfully'));
+        }
+    }
+
+    /**
+     * 插件钩子
+     * @throws \think\exception\DbException
+     * @OA\Get(
+     *     tags={"admin"},
+     *     path="/admin/plugins/hooks/{id}",
+     *     summary="插件钩子",
+     *     description="插件钩子",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="插件id",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer",
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="1",
+     *          description="success",
+     *          @OA\JsonContent(example={"code": 1,"msg": "success","data":{
+     *              "list":{
+     *                  {"id": 14,"type": 3,"once": 0,"name": "模板底部开始","hook": "footer_start","app": "","description": "模板底部开始"}
+     *              },"total":1
+     *          }})
+     *     ),
+     *     @OA\Response(
+     *          response="0",
+     *          @OA\JsonContent(example={"code": 0,"msg": "error!","data":""})
+     *     ),
+     * )
+     */
+    public function hooks()
+    {
+        $id = $this->request->param('id', 0, 'intval');
+
+        $pluginModel = new PluginModel();
+        $plugin      = $pluginModel->find($id);
+
+        if (empty($plugin)) {
+            $this->error('插件未安装!');
+        }
+
+        $hooksArr = HookPluginModel::where('plugin', $plugin['name'])->column('hook');
+        $hooks    = HookModel::where('hook', 'in', $hooksArr)->select();
+
+        $this->success('success！', ['list' => $hooks, 'total' => count($hooks)]);
     }
 
 }

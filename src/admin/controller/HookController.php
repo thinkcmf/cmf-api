@@ -164,7 +164,7 @@ class HookController extends RestAdminBaseController
             HookLogic::importHooks($app);
         }
 
-        $this->success('同步成功！');
+        $this->success(lang('SYNC_SUCCESS'));
     }
 
 

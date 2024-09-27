@@ -8,6 +8,8 @@
 // +----------------------------------------------------------------------
 namespace api\admin\controller;
 
+use app\admin\model\RoleModel;
+use app\admin\model\RoleUserModel;
 use app\admin\model\UserModel;
 use app\admin\service\EmailService;
 use cmf\controller\RestAdminBaseController;
@@ -44,7 +46,10 @@ class MyController extends RestAdminBaseController
         $id   = $this->getUserId();
         $user = UserModel::where("id", $id)->find();
 
-        $this->success('success', ['user' => $user]);
+        $roles   = RoleModel::where('status', 1)->order("id DESC")->select();
+        $roleIds = RoleUserModel::where("user_id", $id)->column("role_id");
+
+        $this->success('success', ['user' => $user, 'role_ids' => $roleIds, 'roles' => $roles]);
     }
 
     /**
@@ -167,7 +172,7 @@ class MyController extends RestAdminBaseController
                 $this->error("不能留空！");
             }
 
-            $adminId = cmf_get_current_admin_id();
+            $adminId = $this->getUserId();
             cmf_set_option('admin_smtp_setting_' . $adminId, $post);
 
             $this->success(lang('EDIT_SUCCESS'));
@@ -225,8 +230,8 @@ class MyController extends RestAdminBaseController
             if (!$validate->check($data)) {
                 $this->error($validate->getError());
             }
-
-            $result = EmailService::send($data['to'], $data['subject'], $data['content']);
+            $adminId = $this->getUserId();
+            $result  = EmailService::send($data['to'], $data['subject'], $data['content'], [], $adminId);
             if ($result && empty($result['error'])) {
                 $this->success('发送成功！');
             } else {
