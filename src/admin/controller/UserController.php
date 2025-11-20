@@ -127,34 +127,31 @@ class UserController extends RestAdminBaseController
      */
     public function save()
     {
-        if ($this->request->isPost()) {
-            $roleIds = $this->request->param('role_ids/a');
-            if (!empty($roleIds) && is_array($roleIds)) {
-                $data   = $this->request->param();
-                $result = $this->validate($data, 'User.add');
-                if ($result !== true) {
-                    $this->error($result);
-                } else {
-                    $data['user_pass']       = cmf_password($data['user_pass']);
-                    $data['create_time']     = time();
-                    $data['last_login_time'] = $data['create_time'];
-                    $user                    = UserModel::create($data);
-                    if (!empty($user['id'])) {
-                        foreach ($roleIds as $roleId) {
-                            if ($this->getUserId() != 1 && $roleId == 1) {
-                                $this->error("为了网站的安全，非网站创建者不可创建超级管理员！");
-                            }
-                            RoleUserModel::insert(["role_id" => $roleId, "user_id" => $user['id']]);
-                        }
-                        $this->success(lang('ADD_SUCCESS'), ['item' => $user]);
-                    } else {
-                        $this->error(lang('ADD_FAILED'));
-                    }
-                }
+        $roleIds = $this->request->param('role_ids/a');
+        if (!empty($roleIds) && is_array($roleIds)) {
+            $data   = $this->request->param();
+            $result = $this->validate($data, 'User.add');
+            if ($result !== true) {
+                $this->error($result);
             } else {
-                $this->error("请为此用户指定角色！");
+                $data['user_pass']       = cmf_password($data['user_pass']);
+                $data['create_time']     = time();
+                $data['last_login_time'] = $data['create_time'];
+                $user                    = UserModel::create($data);
+                if (!empty($user['id'])) {
+                    foreach ($roleIds as $roleId) {
+                        if ($this->getUserId() != 1 && $roleId == 1) {
+                            $this->error("为了网站的安全，非网站创建者不可创建超级管理员！");
+                        }
+                        RoleUserModel::insert(["role_id" => $roleId, "user_id" => $user['id']]);
+                    }
+                    $this->success(lang('ADD_SUCCESS'), ['item' => $user]);
+                } else {
+                    $this->error(lang('ADD_FAILED'));
+                }
             }
-
+        } else {
+            $this->error("请为此用户指定角色！");
         }
     }
 
